@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rollover Daily Budget</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--text:#1b1f24;--muted:#6b7280;--accent:#0f9d6b;--bad:#d64545;--line:#e5e7eb;--chip:#e7f6f0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111418;--card:#1b2026;--text:#eceff3;--muted:#98a2b3;--accent:#34d399;--bad:#f87171;--line:#2a313a;--chip:#173a2e;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111418;--card:#1b2026;--text:#eceff3;--muted:#98a2b3;--accent:#34d399;--bad:#f87171;--line:#2a313a;--chip:#173a2e;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:600px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.4rem;margin:0 0 4px}
+p.sub{margin:0 0 18px;color:var(--muted);font-size:.92rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+label,.lbl{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px}
+input{width:100%;font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
+.big{font-size:2.2rem;font-weight:700;margin:2px 0 4px}
+.big.neg{color:var(--bad)}.big.pos{color:var(--accent)}
+.row{display:flex;gap:10px;align-items:flex-end;margin-top:12px}
+.row>div{flex:1;min-width:0}
+.row.first{margin-top:0}
+button{font:inherit;font-weight:600;border:0;border-radius:10px;padding:11px 16px;background:var(--accent);color:#fff;cursor:pointer}
+button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:500}
+button.x{background:transparent;color:var(--muted);padding:4px 8px;font-size:1.1rem}
+.note{font-size:.85rem;color:var(--muted);margin-top:8px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:right;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:500}
+tr.sel td{background:var(--chip)}
+tbody tr{cursor:pointer}
+.neg{color:var(--bad)}
+.exp{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.exp:last-child{border-bottom:0}
+.exp .mid{flex:1;min-width:0}
+.chip{display:inline-block;background:var(--chip);color:var(--accent);border-radius:99px;padding:1px 10px;font-size:.78rem;font-weight:600}
+.exp .n{color:var(--muted);font-size:.85rem;overflow-wrap:anywhere}
+.exp .a{font-weight:600;white-space:nowrap}
+.cats div{display:flex;justify-content:space-between;padding:5px 0;font-size:.92rem}
+[hidden]{display:none!important}
+select{flex:1;min-width:0;width:100%;font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
+.catpick{display:flex;gap:6px}
+.catpick button{padding:8px 14px}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btns button{flex:1}
+</style>
+</head>
+<body>
+<main>
+  <h1>Rollover Daily Budget</h1>
+  <p class="sub">Unspent money carries over to the next day. Overspending reduces it.</p>
+
+  <div class="card">
+    <div class="row first">
+      <div><label for="daily">Daily budget (Rp)</label>
+        <input id="daily" type="text" inputmode="numeric" placeholder="Rp 0" autocomplete="off"></div>
+      <div><label for="start">Start date</label>
+        <input id="start" type="date"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row first">
+      <button class="ghost" id="prev" aria-label="Previous day">‹</button>
+      <div><label for="date">Date</label><input id="date" type="date"></div>
+      <button class="ghost" id="next" aria-label="Next day">›</button>
+    </div>
+    <div class="lbl" style="margin-top:14px" id="dateLong"></div>
+    <div class="big" id="avail">Rp 0</div>
+    <div class="note" id="sum"></div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Add expense</div>
+    <div class="row first">
+      <div><input id="amt" type="text" inputmode="numeric" placeholder="Rp 0" autocomplete="off"></div>
+      <div class="catpick"><select id="cat" aria-label="Category"></select><button class="ghost" id="newCatBtn" title="Add your own category" aria-label="Add category">+</button></div>
+    </div>
+    <div class="row" id="newCatRow" hidden>
+      <div><input id="newCat" type="text" maxlength="30" placeholder="New category name"></div>
+      <button id="saveCat">Save</button>
+    </div>
+    <div class="row">
+      <div><input id="memo" type="text" maxlength="200" placeholder="Note (optional)"></div>
+      <button id="add">Add</button>
+    </div>
+    <div id="list" style="margin-top:10px"></div>
+    <div class="note" id="noExp">No expenses on this date.</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">History (tap a row to open that date)</div>
+    <div class="scroll"><table>
+      <thead><tr><th>Date</th><th>Budget</th><th>Spent</th><th>Left</th></tr></thead>
+      <tbody id="hist"></tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Total by category</div>
+    <div class="cats" id="catSum"></div>
+    <div class="note" id="noCat">Nothing yet.</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Export to CSV</div>
+    <div class="btns"><button id="expExp">Expenses by category</button><button id="expDay">Daily budget &amp; rollover</button></div>
+    <div class="note" id="exportNote">Opens in Excel or Google Sheets.</div>
+  </div>
+
+  <div class="row" style="justify-content:flex-end"><button class="ghost" id="reset">Reset all</button></div>
+</main>
+
+<script>
+const KEY = "rollover-budget-v2";
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, "0");
+const iso = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+const today = iso(new Date());
+const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const diff = (a, b) => { const x = a.split("-").map(Number), y = b.split("-").map(Number); return Math.round((Date.UTC(y[0], y[1] - 1, y[2]) - Date.UTC(x[0], x[1] - 1, x[2])) / 864e5); };
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); };
+const fmt = n => (n < 0 ? "−" : "") + "Rp " + Math.abs(Math.round(n)).toLocaleString("id-ID");
+const longDate = s => parse(s).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+const shortDate = s => parse(s).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+
+let state = { daily: 200000, start: today, expenses: [], categories: [] };
+try {
+  const s = JSON.parse(localStorage.getItem(KEY));
+  if (s && typeof s.daily === "number" && typeof s.start === "string" && Array.isArray(s.expenses)) state = s;
+} catch (e) {}
+if (!Array.isArray(state.categories)) state.categories = [];
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+const DEFAULT_CATS = ["Food", "Transport", "Shopping", "Bills", "Entertainment", "Health", "Other"];
+const allCats = () => [...new Set([...DEFAULT_CATS, ...state.categories, ...state.expenses.map(e => e.category)])];
+const rp = n => "Rp " + Math.round(n).toLocaleString("id-ID");
+const parseRp = s => Number(String(s).replace(/\D/g, "")) || 0;
+function bindMoney(el, onChange) {
+  el.addEventListener("input", () => {
+    const pos = el.selectionStart == null ? el.value.length : el.selectionStart;
+    const before = el.value.slice(0, pos).replace(/\D/g, "").length;
+    const has = /\d/.test(el.value), n = parseRp(el.value);
+    el.value = has ? rp(n) : "";
+    if (has) { let c = 0, i = 0; for (; i < el.value.length && c < before; i++) if (/\d/.test(el.value[i])) c++; try { el.setSelectionRange(Math.max(i, 3), Math.max(i, 3)); } catch (e) {} }
+    if (onChange) onChange(n);
+  });
+}
+const csvCell = v => { let s = String(v == null ? "" : v); if (typeof v !== "number" && /^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+const toCsv = rows => "\ufeff" + rows.map(r => r.map(csvCell).join(",")).join("\r\n");
+async function exportCsv(name, rows) {
+  const note = $("exportNote");
+  try {
+    const blob = new Blob([toCsv(rows)], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name + "-" + today + ".csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    note.textContent = "Exported " + name + ".";
+  } catch (e) { note.textContent = "Couldn\u2019t export: " + ((e && e.message) || "unknown error"); }
+}
+function dayRows() {
+  const last = [today, ...state.expenses.map(e => e.date)].sort().pop();
+  const out = [["Date", "Daily budget", "Rollover from previous days", "Available budget", "Spent", "Left (rolls over to next day)"]];
+  for (let i = 0; i <= diff(state.start, last); i++) { const d = addDays(state.start, i), bd = budgetFor(d), s = spentOn(d); out.push([d, state.daily, bd - state.daily, bd, s, bd - s]); }
+  return out;
+}
+let sel = today;
+
+const spentOn = d => state.expenses.filter(e => e.date === d).reduce((t, e) => t + e.amount, 0);
+function budgetFor(d) {
+  const n = diff(state.start, d);
+  if (n < 0) return 0;
+  let b = state.daily * (n + 1);
+  for (const e of state.expenses) if (e.date < d && e.date >= state.start) b -= e.amount;
+  return b;
+}
+
+function render() {
+  if (document.activeElement !== $("daily")) $("daily").value = state.daily ? rp(state.daily) : "";
+  $("start").value = state.start;
+  $("date").value = sel;
+  $("dateLong").textContent = longDate(sel);
+
+  const before = diff(state.start, sel) < 0;
+  const b = budgetFor(sel), sp = spentOn(sel), left = b - sp;
+  const a = $("avail");
+  a.textContent = before ? "—" : fmt(left);
+  a.className = "big " + (left < 0 ? "neg" : "pos");
+  $("sum").textContent = before ? "This date is before your start date." : "";
+
+  const sc = $("cat"), cur = sc.value; sc.innerHTML = "";
+  allCats().forEach(c => { const o = document.createElement("option"); o.value = c; o.textContent = c; sc.appendChild(o); });
+  if (cur && allCats().includes(cur)) sc.value = cur;
+
+  const list = $("list"); list.innerHTML = "";
+  const todays = state.expenses.filter(e => e.date === sel);
+  $("noExp").style.display = todays.length ? "none" : "block";
+  todays.forEach(e => {
+    const row = document.createElement("div"); row.className = "exp";
+    const mid = document.createElement("div"); mid.className = "mid";
+    const chip = document.createElement("span"); chip.className = "chip"; chip.textContent = e.category;
+    mid.appendChild(chip);
+    if (e.note) { const n = document.createElement("div"); n.className = "n"; n.textContent = e.note; mid.appendChild(n); }
+    const amt = document.createElement("div"); amt.className = "a"; amt.textContent = fmt(e.amount);
+    const del = document.createElement("button"); del.className = "x"; del.textContent = "×"; del.setAttribute("aria-label", "Delete expense");
+    del.onclick = () => { state.expenses = state.expenses.filter(x => x.id !== e.id); save(); render(); };
+    row.append(mid, amt, del); list.appendChild(row);
+  });
+
+  const last = [today, sel, ...state.expenses.map(e => e.date)].sort().pop();
+  const h = $("hist"); h.innerHTML = "";
+  const days = Math.min(diff(state.start, last), 730);
+  for (let i = days; i >= 0; i--) {
+    const d = addDays(state.start, i), bd = budgetFor(d), s = spentOn(d);
+    const tr = document.createElement("tr"); if (d === sel) tr.className = "sel";
+    [shortDate(d), fmt(bd), fmt(s), fmt(bd - s)].forEach((v, j) => {
+      const td = document.createElement("td"); td.textContent = v;
+      if (j === 3 && bd - s < 0) td.className = "neg";
+      tr.appendChild(td);
+    });
+    tr.onclick = () => { sel = d; render(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+    h.appendChild(tr);
+  }
+
+  const tot = {};
+  state.expenses.forEach(e => tot[e.category] = (tot[e.category] || 0) + e.amount);
+  const cs = $("catSum"); cs.innerHTML = "";
+  const keys = Object.keys(tot).sort((x, y) => tot[y] - tot[x]);
+  $("noCat").style.display = keys.length ? "none" : "block";
+  keys.forEach(k => {
+    const r = document.createElement("div");
+    const l = document.createElement("span"); l.textContent = k;
+    const v = document.createElement("span"); v.textContent = fmt(tot[k]);
+    r.append(l, v); cs.appendChild(r);
+  });
+}
+
+bindMoney($("daily"), n => { state.daily = n; save(); render(); });
+bindMoney($("amt"));
+$("start").addEventListener("change", e => { if (e.target.value) { state.start = e.target.value; save(); } render(); });
+$("date").addEventListener("change", e => { if (e.target.value) sel = e.target.value; render(); });
+$("prev").onclick = () => { sel = addDays(sel, -1); render(); };
+$("next").onclick = () => { sel = addDays(sel, 1); render(); };
+$("add").onclick = () => {
+  const amount = parseRp($("amt").value);
+  if (!(amount > 0)) { $("amt").focus(); return; }
+  const category = $("cat").value || "Other";
+  state.expenses.push({ id: Date.now() + Math.random(), date: sel, category, amount, note: $("memo").value.trim() });
+  if (sel < state.start) state.start = sel;
+  $("amt").value = ""; $("memo").value = ""; $("amt").focus();
+  save(); render();
+};
+$("memo").addEventListener("keydown", e => { if (e.key === "Enter") $("add").click(); });
+$("newCatBtn").onclick = () => { const r = $("newCatRow"); r.hidden = !r.hidden; if (!r.hidden) $("newCat").focus(); };
+function saveCat() {
+  const name = $("newCat").value.trim().slice(0, 30);
+  if (!name) { $("newCat").focus(); return; }
+  const found = allCats().find(c => c.toLowerCase() === name.toLowerCase());
+  if (!found) state.categories.push(name);
+  $("newCat").value = ""; $("newCatRow").hidden = true;
+  save(); render(); $("cat").value = found || name;
+}
+$("saveCat").onclick = saveCat;
+$("newCat").addEventListener("keydown", e => { if (e.key === "Enter") saveCat(); });
+$("expExp").onclick = () => exportCsv("expenses", [["Date", "Category", "Amount", "Note"], ...[...state.expenses].sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id).map(e => [e.date, e.category, e.amount, e.note || ""])]);
+$("expDay").onclick = () => exportCsv("daily-budget", dayRows());
+$("reset").onclick = () => {
+  if (confirm("Clear all expenses and settings?")) { state = { daily: 200000, start: today, expenses: [], categories: [] }; sel = today; save(); render(); }
+};
+render();
+</script>
+</body>
+</html>
