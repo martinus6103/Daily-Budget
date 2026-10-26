@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Rollover Daily Budget</title>
 <style>
-:root{--bg:#f6f7f9;--card:#fff;--text:#1b1f24;--muted:#6b7280;--accent:#0f9d6b;--bad:#d64545;--line:#e5e7eb;--chip:#e7f6f0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111418;--card:#1b2026;--text:#eceff3;--muted:#98a2b3;--accent:#34d399;--bad:#f87171;--line:#2a313a;--chip:#173a2e;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#111418;--card:#1b2026;--text:#eceff3;--muted:#98a2b3;--accent:#34d399;--bad:#f87171;--line:#2a313a;--chip:#173a2e;color-scheme:dark}
+:root{--bg:#f6f7f9;--card:#fff;--text:#1b1f24;--muted:#6b7280;--accent:#0f9d6b;--bad:#d64545;--line:#e5e7eb;--chip:#e7f6f0;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#111418;--card:#1b2026;--text:#eceff3;--muted:#98a2b3;--accent:#34d399;--bad:#f87171;--line:#2a313a;--chip:#173a2e;color-scheme:dark}}
 *{box-sizing:border-box}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-main{max-width:600px;margin:0 auto;padding:20px 16px 40px}
-h1{font-size:1.4rem;margin:0 0 4px}
-p.sub{margin:0 0 18px;color:var(--muted);font-size:.92rem}
+main{max-width:640px;margin:0 auto;padding:20px 16px 40px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:16px}
+h1{font-size:1.4rem;margin:0 0 2px}
+h3{margin:22px 0 6px;font-size:1rem}
+p.sub{margin:0;color:var(--muted);font-size:.9rem}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
 label,.lbl{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px}
-input{width:100%;font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
+input,select{width:100%;font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
 .big{font-size:2.2rem;font-weight:700;margin:2px 0 4px}
 .big.neg{color:var(--bad)}.big.pos{color:var(--accent)}
 .row{display:flex;gap:10px;align-items:flex-end;margin-top:12px}
@@ -24,256 +24,436 @@ input{width:100%;font:inherit;padding:10px 12px;border-radius:10px;border:1px so
 .row.first{margin-top:0}
 button{font:inherit;font-weight:600;border:0;border-radius:10px;padding:11px 16px;background:var(--accent);color:#fff;cursor:pointer}
 button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:500}
-button.x{background:transparent;color:var(--muted);padding:4px 8px;font-size:1.1rem}
+button.x{background:transparent;color:var(--muted);padding:2px 8px;font-size:1.1rem}
+button.sm{padding:7px 10px;font-size:.85rem}
 .note{font-size:.85rem;color:var(--muted);margin-top:8px}
-.scroll{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:.9rem}
-th,td{text-align:right;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
-th:first-child,td:first-child{text-align:left}
-th{color:var(--muted);font-weight:500}
-tr.sel td{background:var(--chip)}
-tbody tr{cursor:pointer}
 .neg{color:var(--bad)}
-.exp{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
-.exp:last-child{border-bottom:0}
-.exp .mid{flex:1;min-width:0}
-.chip{display:inline-block;background:var(--chip);color:var(--accent);border-radius:99px;padding:1px 10px;font-size:.78rem;font-weight:600}
-.exp .n{color:var(--muted);font-size:.85rem;overflow-wrap:anywhere}
-.exp .a{font-weight:600;white-space:nowrap}
-.cats div{display:flex;justify-content:space-between;padding:5px 0;font-size:.92rem}
 [hidden]{display:none!important}
-select{flex:1;min-width:0;width:100%;font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
-.catpick{display:flex;gap:6px}
-.catpick button{padding:8px 14px}
-.btns{display:flex;gap:10px;flex-wrap:wrap}
-.btns button{flex:1}
+.top{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin-bottom:14px}
+.top>.card{margin:0}
+@media (min-width:900px){main{max-width:1120px}.top{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}.hw{max-height:560px;overflow:auto}}
+.catpick{display:flex;gap:6px}.catpick button{padding:8px 14px}
+.btns{display:flex;gap:10px;flex-wrap:wrap}.btns button{flex:1}
+.chip{display:inline-block;background:var(--chip);color:var(--accent);border-radius:99px;padding:1px 10px;font-size:.78rem;font-weight:600}
+.exp{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line)}
+.exp .mid{flex:1;min-width:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.exp .n{color:var(--muted);font-size:.9rem;overflow-wrap:anywhere}
+.exp .a{font-weight:600;white-space:nowrap;font-size:.92rem}
+.hh,summary.hs{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center}
+.hh{font-size:.8rem;color:var(--muted);padding:0 0 6px}
+.hh span:not(:first-child),.hs span:not(:first-child){text-align:right;min-width:92px}
+details{border-top:1px solid var(--line)}
+summary{padding:9px 0;cursor:pointer;list-style:none}
+summary::-webkit-details-marker{display:none}
+.hs .d{font-weight:600}
+.hb{padding:0 0 10px}
+.seg{display:flex;gap:6px;margin-bottom:10px}
+.seg button{flex:1;background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:500;padding:8px}
+.seg button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.nav{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-bottom:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.tile{border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.tile small{display:block;color:var(--muted);font-size:.78rem}
+.tile b{font-size:1.05rem}
+.sum{display:grid;gap:18px;align-items:start}
+@media (min-width:760px){.sum{grid-template-columns:230px 1fr}}
+#pie{display:flex;justify-content:center}
+.g summary{display:flex;align-items:center;gap:8px}
+.g .cn{flex:1;font-weight:600;overflow-wrap:anywhere}
+.g .cv{white-space:nowrap;font-size:.9rem}
+.dot{width:12px;height:12px;border-radius:50%;flex:none}
+.nl{display:flex;gap:8px;padding:3px 0 3px 20px;font-size:.88rem;color:var(--muted)}
+.nl span:first-child{flex:1;overflow-wrap:anywhere}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-start;justify-content:center;padding:16px;z-index:20;overflow:auto}
+.dlg{background:var(--card);border-radius:16px;padding:20px;width:100%;max-width:480px;margin:auto}
+.dlg h2{margin:0;font-size:1.2rem}
+.dlg label{margin-top:12px}
+.wk,#cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.wk{font-size:.75rem;color:var(--muted);text-align:center;margin-bottom:4px}
+#cal{touch-action:none;user-select:none;-webkit-user-select:none}
+.cd{border:1px solid var(--line);border-radius:10px;padding:4px 6px;min-height:54px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;font-size:.82rem}
+.cd .v{font-size:.7rem;opacity:.85}
+.cd.ov{border-color:var(--accent);border-width:2px}
+.cd.sel{background:var(--text);color:var(--bg)}
+.cd.e{visibility:hidden}
 </style>
 </head>
 <body>
 <main>
-  <h1>Rollover Daily Budget</h1>
-  <p class="sub">Unspent money carries over to the next day. Overspending reduces it.</p>
+  <header>
+    <div><h1>Rollover Daily Budget</h1><p class="sub">Unspent money carries over to the next day.</p></div>
+    <button class="ghost" id="openSet">⚙ Settings</button>
+  </header>
 
-  <div class="card">
-    <div class="row first">
-      <div><label for="daily">Daily budget (Rp)</label>
-        <input id="daily" type="text" inputmode="numeric" placeholder="Rp 0" autocomplete="off"></div>
-      <div><label for="start">Start date</label>
-        <input id="start" type="date"></div>
+  <div class="top">
+    <div class="card" id="addCard">
+      <div class="row first">
+        <button class="ghost" id="prev" aria-label="Previous day">‹</button>
+        <div><label for="date">Date</label><input id="date" type="date"></div>
+        <button class="ghost" id="next" aria-label="Next day">›</button>
+      </div>
+      <div class="lbl" style="margin-top:14px" id="dateLong"></div>
+      <div class="big" id="avail">—</div>
+      <div class="note" id="sum"></div>
+      <div class="row">
+        <div><input id="amt" type="text" inputmode="numeric" autocomplete="off"></div>
+        <div class="catpick"><select id="cat" aria-label="Category"></select><button class="ghost" id="newCatBtn" title="Add your own category" aria-label="Add category">+</button></div>
+      </div>
+      <div class="row">
+        <div><input id="memo" type="text" maxlength="200" placeholder="Note (optional)"></div>
+        <button id="add">Add</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="lbl">History</div>
+      <div class="hw">
+        <div class="hh"><span>Date</span><span>Spent</span><span>Left</span></div>
+        <div id="hist"></div>
+        <button class="ghost sm" id="more" style="width:100%;margin-top:8px" hidden>Show older days</button>
+      </div>
     </div>
   </div>
 
   <div class="card">
-    <div class="row first">
-      <button class="ghost" id="prev" aria-label="Previous day">‹</button>
-      <div><label for="date">Date</label><input id="date" type="date"></div>
-      <button class="ghost" id="next" aria-label="Next day">›</button>
+    <div class="lbl">Summary</div>
+    <div class="seg" id="tabs"><button data-m="week">Weekly</button><button data-m="month">Monthly</button><button data-m="custom">Custom</button></div>
+    <div class="nav" id="sNav"><button class="ghost" id="sPrev" aria-label="Previous period">‹</button><b id="sLabel"></b><button class="ghost" id="sNext" aria-label="Next period">›</button></div>
+    <div class="row first" id="cRange" style="margin-bottom:12px"><div><label for="cf">From</label><input id="cf" type="date"></div><div><label for="ct">To</label><input id="ct" type="date"></div></div>
+    <div class="tiles" id="tiles"></div>
+    <div class="row first" style="align-items:center;margin-bottom:12px">
+      <div><div class="lbl" style="margin:0 0 4px">Group by</div><div class="seg" style="margin:0"><button data-g="category">Category</button><button data-g="note">Note</button></div></div>
+      <div><div class="lbl" style="margin:0 0 4px">Sort</div><div class="seg" style="margin:0"><button data-s="high">Highest</button><button data-s="low">Lowest</button><button data-s="name">Name</button></div></div>
     </div>
-    <div class="lbl" style="margin-top:14px" id="dateLong"></div>
-    <div class="big" id="avail">Rp 0</div>
-    <div class="note" id="sum"></div>
+    <div class="sum"><div id="pie"></div><div class="g" id="catList"></div></div>
+    <div class="note" id="sumNote">Tap a row to see what’s inside it.</div>
   </div>
-
-  <div class="card">
-    <div class="lbl">Add expense</div>
-    <div class="row first">
-      <div><input id="amt" type="text" inputmode="numeric" placeholder="Rp 0" autocomplete="off"></div>
-      <div class="catpick"><select id="cat" aria-label="Category"></select><button class="ghost" id="newCatBtn" title="Add your own category" aria-label="Add category">+</button></div>
-    </div>
-    <div class="row" id="newCatRow" hidden>
-      <div><input id="newCat" type="text" maxlength="30" placeholder="New category name"></div>
-      <button id="saveCat">Save</button>
-    </div>
-    <div class="row">
-      <div><input id="memo" type="text" maxlength="200" placeholder="Note (optional)"></div>
-      <button id="add">Add</button>
-    </div>
-    <div id="list" style="margin-top:10px"></div>
-    <div class="note" id="noExp">No expenses on this date.</div>
-  </div>
-
-  <div class="card">
-    <div class="lbl">History (tap a row to open that date)</div>
-    <div class="scroll"><table>
-      <thead><tr><th>Date</th><th>Budget</th><th>Spent</th><th>Left</th></tr></thead>
-      <tbody id="hist"></tbody>
-    </table></div>
-  </div>
-
-  <div class="card">
-    <div class="lbl">Total by category</div>
-    <div class="cats" id="catSum"></div>
-    <div class="note" id="noCat">Nothing yet.</div>
-  </div>
-
-  <div class="card">
-    <div class="lbl">Export to CSV</div>
-    <div class="btns"><button id="expExp">Expenses by category</button><button id="expDay">Daily budget &amp; rollover</button></div>
-    <div class="note" id="exportNote">Opens in Excel or Google Sheets.</div>
-  </div>
-
-  <div class="row" style="justify-content:flex-end"><button class="ghost" id="reset">Reset all</button></div>
 </main>
+
+<div class="ov" id="settings" hidden><div class="dlg">
+  <div style="display:flex;justify-content:space-between;align-items:center"><h2>Settings</h2><button id="sDone">Done</button></div>
+  <label for="cur">Currency</label><select id="cur"></select>
+  <div class="note">Only the label and format change; amounts are not converted.</div>
+  <div class="row"><div><label for="daily">Default daily budget</label><input id="daily" type="text" inputmode="numeric" autocomplete="off"></div>
+  <div><label for="weekend">Weekend budget (optional)</label><input id="weekend" type="text" inputmode="numeric" placeholder="Same as default" autocomplete="off"></div></div>
+  <label for="start">Start date</label><input id="start" type="date">
+
+  <h3>Special budgets</h3>
+  <div class="note" style="margin:0 0 10px">Drag across days to select. Shift-click selects a range, Ctrl/⌘-click adds or removes a day, and on touch screens tap days to add or remove them. Outlined days have a custom budget.</div>
+  <div class="nav"><button class="ghost" id="cPrev" aria-label="Previous month">‹</button><b id="calLabel"></b><button class="ghost" id="cNext" aria-label="Next month">›</button></div>
+  <div class="wk"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+  <div id="cal"></div>
+  <div class="btns" style="margin-top:10px"><button class="ghost sm" id="qWe">Weekends</button><button class="ghost sm" id="qWd">Weekdays</button><button class="ghost sm" id="qAll">Whole month</button><button class="ghost sm" id="qClr">Clear</button></div>
+  <div class="note" id="selInfo">0 days selected</div>
+  <div class="row"><div><label for="cAmt">Budget per day for selected days</label><input id="cAmt" type="text" inputmode="numeric" autocomplete="off"></div><button id="cApply">Apply</button></div>
+  <button class="ghost sm" id="cReset" style="margin-top:8px">Reset selected days to default</button>
+
+  <h3>Data</h3>
+  <div class="btns"><button id="expExp">Export expenses (CSV)</button><button id="expDay">Export daily budget (CSV)</button></div>
+  <div class="note" id="exportNote">Opens in Excel or Google Sheets.</div>
+  <button class="ghost sm" id="reset" style="margin-top:12px">Reset all data</button>
+</div></div>
+
+<div class="ov" id="modal" hidden style="align-items:center"><div class="dlg" style="max-width:380px">
+  <h2 id="mTitle"></h2><div id="mBody"></div><div class="note neg" id="mErr"></div>
+  <div class="row"><button class="ghost" id="mCancel" style="flex:1">Cancel</button><button id="mOk" style="flex:1">Save</button></div>
+</div></div>
 
 <script>
 const KEY = "rollover-budget-v2";
 const $ = id => document.getElementById(id);
+const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; };
 const pad = n => String(n).padStart(2, "0");
 const iso = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
 const today = iso(new Date());
 const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
 const diff = (a, b) => { const x = a.split("-").map(Number), y = b.split("-").map(Number); return Math.round((Date.UTC(y[0], y[1] - 1, y[2]) - Date.UTC(x[0], x[1] - 1, x[2])) / 864e5); };
 const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); };
-const fmt = n => (n < 0 ? "−" : "") + "Rp " + Math.abs(Math.round(n)).toLocaleString("id-ID");
+const monthStart = (s, k) => { const d = parse(s); return iso(new Date(d.getFullYear(), d.getMonth() + (k || 0), 1)); };
+const parseRp = s => Number(String(s).replace(/\D/g, "")) || 0;
 const longDate = s => parse(s).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 const shortDate = s => parse(s).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+const dm = s => parse(s).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+const compact = n => { const a = Math.abs(n); return (n < 0 ? "−" : "") + (a >= 1e6 ? +(a / 1e6).toFixed(1) + "M" : a >= 1e3 ? +(a / 1e3).toFixed(1) + "K" : a); };
 
-let state = { daily: 200000, start: today, expenses: [], categories: [] };
+const LOC = { IDR: "id-ID", USD: "en-US", EUR: "de-DE", GBP: "en-GB", JPY: "ja-JP", SGD: "en-SG", MYR: "ms-MY", AUD: "en-AU", INR: "en-IN", CNY: "zh-CN", KRW: "ko-KR", THB: "th-TH", PHP: "en-PH" };
+let state = { daily: 200000, weekend: null, start: today, expenses: [], categories: [], overrides: {}, currency: "IDR" };
 try {
   const s = JSON.parse(localStorage.getItem(KEY));
-  if (s && typeof s.daily === "number" && typeof s.start === "string" && Array.isArray(s.expenses)) state = s;
+  if (s && typeof s.daily === "number" && typeof s.start === "string" && Array.isArray(s.expenses)) state = Object.assign(state, s);
 } catch (e) {}
 if (!Array.isArray(state.categories)) state.categories = [];
+if (!state.overrides || typeof state.overrides !== "object") state.overrides = {};
+if (!LOC[state.currency]) state.currency = "IDR";
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+if (Array.isArray(state.rules)) { // migrate older "special budget" rules
+  state.rules.forEach(r => {
+    if (!r.from && !r.to) { if (r.days === "weekend") state.weekend = r.amount; else if (r.days === "all") state.daily = r.amount; }
+    else if (r.from && r.to) for (let d = r.from, i = 0; d <= r.to && i < 800; d = addDays(d, 1), i++) { const w = parse(d).getDay(); if (r.days === "all" || (r.days === "weekend") === (w === 0 || w === 6)) state.overrides[d] = r.amount; }
+  });
+  delete state.rules; save();
+}
+let nf; const setNf = () => { nf = new Intl.NumberFormat(LOC[state.currency], { style: "currency", currency: state.currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }); };
+setNf();
+const rp = n => nf.format(Math.round(n)).replace(/\u00a0/g, " ");
+const fmt = n => (n < 0 ? "−" : "") + rp(Math.abs(n));
+
+let sel = today, mode = "week", anchor = today, cFrom = addDays(today, -6), cTo = today, grp = "category", srt = "high";
+let openDays = new Set([today]), histLimit = 60, D = {};
 const DEFAULT_CATS = ["Food", "Transport", "Shopping", "Bills", "Entertainment", "Health", "Other"];
+const PAL = ["#0f9d6b", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#84cc16", "#f97316", "#64748b"];
 const allCats = () => [...new Set([...DEFAULT_CATS, ...state.categories, ...state.expenses.map(e => e.category)])];
-const rp = n => "Rp " + Math.round(n).toLocaleString("id-ID");
-const parseRp = s => Number(String(s).replace(/\D/g, "")) || 0;
-function bindMoney(el, onChange) {
-  el.addEventListener("input", () => {
-    const pos = el.selectionStart == null ? el.value.length : el.selectionStart;
-    const before = el.value.slice(0, pos).replace(/\D/g, "").length;
-    const has = /\d/.test(el.value), n = parseRp(el.value);
-    el.value = has ? rp(n) : "";
-    if (has) { let c = 0, i = 0; for (; i < el.value.length && c < before; i++) if (/\d/.test(el.value[i])) c++; try { el.setSelectionRange(Math.max(i, 3), Math.max(i, 3)); } catch (e) {} }
-    if (onChange) onChange(n);
+const color = c => PAL[allCats().indexOf(c) % PAL.length];
+
+function bindMoney(inp, onChange) {
+  inp.addEventListener("input", () => {
+    const pos = inp.selectionStart == null ? inp.value.length : inp.selectionStart;
+    const before = inp.value.slice(0, pos).replace(/\D/g, "").length;
+    const has = /\d/.test(inp.value), n = parseRp(inp.value);
+    inp.value = has ? rp(n) : "";
+    if (has) { let c = 0, i = 0; for (; i < inp.value.length && c < before; i++) if (/\d/.test(inp.value[i])) c++; if (!before) i = inp.value.search(/\d/); try { inp.setSelectionRange(i, i); } catch (e) {} }
+    if (onChange) onChange(has ? n : null);
   });
 }
-const csvCell = v => { let s = String(v == null ? "" : v); if (typeof v !== "number" && /^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-const toCsv = rows => "\ufeff" + rows.map(r => r.map(csvCell).join(",")).join("\r\n");
-async function exportCsv(name, rows) {
-  const note = $("exportNote");
-  try {
-    const blob = new Blob([toCsv(rows)], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = name + "-" + today + ".csv";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    note.textContent = "Exported " + name + ".";
-  } catch (e) { note.textContent = "Couldn\u2019t export: " + ((e && e.message) || "unknown error"); }
+
+/* ---------- budget engine ---------- */
+function amountFor(d) {
+  if (state.overrides[d] != null) return state.overrides[d];
+  const w = parse(d).getDay();
+  return (w === 0 || w === 6) && state.weekend != null ? state.weekend : state.daily;
 }
-function dayRows() {
-  const last = [today, ...state.expenses.map(e => e.date)].sort().pop();
-  const out = [["Date", "Daily budget", "Rollover from previous days", "Available budget", "Spent", "Left (rolls over to next day)"]];
-  for (let i = 0; i <= diff(state.start, last); i++) { const d = addDays(state.start, i), bd = budgetFor(d), s = spentOn(d); out.push([d, state.daily, bd - state.daily, bd, s, bd - s]); }
+function calc(end) {
+  const by = {}; state.expenses.forEach(e => by[e.date] = (by[e.date] || 0) + e.amount);
+  const out = {}; let carry = 0, n = Math.min(diff(state.start, end), 1500);
+  for (let i = 0; i <= n; i++) {
+    const d = addDays(state.start, i), amt = amountFor(d), avail = carry + amt, spent = by[d] || 0;
+    out[d] = { amt, roll: carry, avail, spent, left: avail - spent }; carry = avail - spent;
+  }
   return out;
 }
-let sel = today;
-
-const spentOn = d => state.expenses.filter(e => e.date === d).reduce((t, e) => t + e.amount, 0);
-function budgetFor(d) {
-  const n = diff(state.start, d);
-  if (n < 0) return 0;
-  let b = state.daily * (n + 1);
-  for (const e of state.expenses) if (e.date < d && e.date >= state.start) b -= e.amount;
-  return b;
+function range() {
+  if (mode === "custom") return cFrom <= cTo ? { from: cFrom, to: cTo } : { from: cTo, to: cFrom };
+  if (mode === "week") { const f = addDays(anchor, -((parse(anchor).getDay() + 6) % 7)); return { from: f, to: addDays(f, 6) }; }
+  const f = monthStart(anchor); return { from: f, to: addDays(monthStart(anchor, 1), -1) };
 }
+const lastExp = () => [today, sel, ...state.expenses.map(e => e.date)].sort().pop();
 
-function render() {
-  if (document.activeElement !== $("daily")) $("daily").value = state.daily ? rp(state.daily) : "";
-  $("start").value = state.start;
-  $("date").value = sel;
-  $("dateLong").textContent = longDate(sel);
+/* ---------- small modal (new category) ---------- */
+function openModal(title, html, onOk) {
+  $("mTitle").textContent = title; $("mBody").innerHTML = html; $("mErr").textContent = ""; $("modal").hidden = false;
+  $("mOk").onclick = () => { if (onOk() !== false) $("modal").hidden = true; };
+  const f = $("mBody").querySelector("input"); if (f) setTimeout(() => f.focus(), 30);
+}
+$("mCancel").onclick = () => { $("modal").hidden = true; };
+$("modal").addEventListener("click", e => { if (e.target === $("modal")) $("modal").hidden = true; });
+$("settings").addEventListener("click", e => { if (e.target === $("settings")) $("settings").hidden = true; });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { if (!$("modal").hidden) $("modal").hidden = true; else $("settings").hidden = true; }
+  if (e.key === "Enter" && !$("modal").hidden && e.target.tagName === "INPUT") $("mOk").click();
+});
+$("newCatBtn").onclick = () => openModal("New category", '<label>Category name</label><input id="cName" type="text" maxlength="30" placeholder="e.g. Coffee" autocomplete="off">', () => {
+  const name = $("cName").value.trim().slice(0, 30);
+  if (!name) { $("mErr").textContent = "Please enter a name."; return false; }
+  const found = allCats().find(c => c.toLowerCase() === name.toLowerCase());
+  if (!found) state.categories.push(name);
+  save(); render(); $("cat").value = found || name;
+});
 
-  const before = diff(state.start, sel) < 0;
-  const b = budgetFor(sel), sp = spentOn(sel), left = b - sp;
-  const a = $("avail");
-  a.textContent = before ? "—" : fmt(left);
-  a.className = "big " + (left < 0 ? "neg" : "pos");
-  $("sum").textContent = before ? "This date is before your start date." : "";
-
+/* ---------- main screen ---------- */
+function renderTop() {
+  $("date").value = sel; $("dateLong").textContent = longDate(sel); $("amt").placeholder = rp(0);
+  const x = D[sel], a = $("avail");
+  a.textContent = x ? fmt(x.left) : "—"; a.className = "big " + (x && x.left < 0 ? "neg" : "pos");
+  $("sum").textContent = x ? "" : "This date is before your start date.";
   const sc = $("cat"), cur = sc.value; sc.innerHTML = "";
-  allCats().forEach(c => { const o = document.createElement("option"); o.value = c; o.textContent = c; sc.appendChild(o); });
+  allCats().forEach(c => { const o = el("option", "", c); o.value = c; sc.appendChild(o); });
   if (cur && allCats().includes(cur)) sc.value = cur;
-
-  const list = $("list"); list.innerHTML = "";
-  const todays = state.expenses.filter(e => e.date === sel);
-  $("noExp").style.display = todays.length ? "none" : "block";
-  todays.forEach(e => {
-    const row = document.createElement("div"); row.className = "exp";
-    const mid = document.createElement("div"); mid.className = "mid";
-    const chip = document.createElement("span"); chip.className = "chip"; chip.textContent = e.category;
-    mid.appendChild(chip);
-    if (e.note) { const n = document.createElement("div"); n.className = "n"; n.textContent = e.note; mid.appendChild(n); }
-    const amt = document.createElement("div"); amt.className = "a"; amt.textContent = fmt(e.amount);
-    const del = document.createElement("button"); del.className = "x"; del.textContent = "×"; del.setAttribute("aria-label", "Delete expense");
-    del.onclick = () => { state.expenses = state.expenses.filter(x => x.id !== e.id); save(); render(); };
-    row.append(mid, amt, del); list.appendChild(row);
-  });
-
-  const last = [today, sel, ...state.expenses.map(e => e.date)].sort().pop();
+}
+function expRow(e) {
+  const row = el("div", "exp"), mid = el("div", "mid");
+  mid.appendChild(el("span", "chip", e.category)); if (e.note) mid.appendChild(el("span", "n", e.note));
+  const del = el("button", "x", "×"); del.setAttribute("aria-label", "Delete expense");
+  del.onclick = () => { state.expenses = state.expenses.filter(z => z.id !== e.id); save(); render(); };
+  row.append(mid, el("div", "a", fmt(e.amount)), del); return row;
+}
+function renderHist() {
   const h = $("hist"); h.innerHTML = "";
-  const days = Math.min(diff(state.start, last), 730);
-  for (let i = days; i >= 0; i--) {
-    const d = addDays(state.start, i), bd = budgetFor(d), s = spentOn(d);
-    const tr = document.createElement("tr"); if (d === sel) tr.className = "sel";
-    [shortDate(d), fmt(bd), fmt(s), fmt(bd - s)].forEach((v, j) => {
-      const td = document.createElement("td"); td.textContent = v;
-      if (j === 3 && bd - s < 0) td.className = "neg";
-      tr.appendChild(td);
-    });
-    tr.onclick = () => { sel = d; render(); window.scrollTo({ top: 0, behavior: "smooth" }); };
-    h.appendChild(tr);
+  const top = diff(state.start, lastExp()), low = Math.max(0, top - histLimit + 1);
+  for (let i = top; i >= low; i--) {
+    const d = addDays(state.start, i), y = D[d]; if (!y) continue;
+    const det = el("details"), sm = el("summary", "hs"); det.open = openDays.has(d);
+    const dt = el("span", "d", shortDate(d) + (d === today ? " · Today" : ""));
+    sm.append(dt, el("span", "", fmt(y.spent)), el("span", y.left < 0 ? "neg" : "", fmt(y.left)));
+    sm.onclick = () => { const willOpen = !det.open; if (willOpen) { openDays.add(d); sel = d; } else openDays.delete(d); renderTop(); };
+    det.appendChild(sm);
+    const body = el("div", "hb"); body.appendChild(el("div", "note", "Budget available: " + fmt(y.avail) + (y.roll ? " (incl. " + fmt(y.roll) + " rollover)" : "")));
+    const es = state.expenses.filter(e => e.date === d);
+    if (es.length) es.forEach(e => body.appendChild(expRow(e))); else body.appendChild(el("div", "note", "No expenses."));
+    det.appendChild(body); h.appendChild(det);
   }
+  $("more").hidden = low <= 0;
+}
+function pie(items, total) {
+  const NS = "http://www.w3.org/2000/svg", c = 90, r = 86;
+  const svg = document.createElementNS(NS, "svg"); svg.setAttribute("viewBox", "0 0 180 180"); svg.setAttribute("width", "200"); svg.setAttribute("height", "200");
+  let a = -Math.PI / 2;
+  items.forEach(g => {
+    const f = g.total / total; let node;
+    if (items.length === 1) { node = document.createElementNS(NS, "circle"); node.setAttribute("cx", c); node.setAttribute("cy", c); node.setAttribute("r", r); }
+    else {
+      const b = a + f * 2 * Math.PI, p = x => (c + r * Math.cos(x)).toFixed(2), q = x => (c + r * Math.sin(x)).toFixed(2);
+      node = document.createElementNS(NS, "path"); node.setAttribute("d", `M${c} ${c}L${p(a)} ${q(a)}A${r} ${r} 0 ${f > .5 ? 1 : 0} 1 ${p(b)} ${q(b)}Z`); a = b;
+    }
+    node.setAttribute("fill", g.col); node.setAttribute("stroke", "var(--card)"); node.setAttribute("stroke-width", "1.5");
+    const t = document.createElementNS(NS, "title"); t.textContent = g.label + ": " + fmt(g.total); node.appendChild(t); svg.appendChild(node);
+  });
+  return svg;
+}
+function renderSummary() {
+  const R = range(); if ([lastExp(), R.to].sort().pop() > Object.keys(D).pop()) D = calc([lastExp(), R.to].sort().pop());
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.m === mode));
+  document.querySelectorAll("[data-g]").forEach(b => b.classList.toggle("on", b.dataset.g === grp));
+  document.querySelectorAll("[data-s]").forEach(b => b.classList.toggle("on", b.dataset.s === srt));
+  $("cRange").hidden = mode !== "custom"; $("sNav").hidden = mode === "custom";
+  $("sLabel").textContent = dm(R.from) + " – " + dm(R.to); $("cf").value = cFrom; $("ct").value = cTo;
+  let bud = 0; const span = diff(R.from, R.to);
+  if (span <= 1500) for (let i = 0; i <= span; i++) { const x = D[addDays(R.from, i)]; if (x) bud += x.amt; }
+  const exps = state.expenses.filter(e => e.date >= R.from && e.date <= R.to);
+  const total = exps.reduce((t, e) => t + e.amount, 0), leftP = bud - total, endBal = D[R.to] ? D[R.to].left : null;
+  const tile = (l, v, bad) => `<div class="tile"><small>${l}</small><b class="${bad ? "neg" : ""}">${v}</b></div>`;
+  $("tiles").innerHTML = tile("Budget in period", fmt(bud)) + tile("Spent", fmt(total)) + tile("Left in period", fmt(leftP), leftP < 0) + tile("Balance at end (with rollover)", endBal == null ? "—" : fmt(endBal), endBal != null && endBal < 0);
 
-  const tot = {};
-  state.expenses.forEach(e => tot[e.category] = (tot[e.category] || 0) + e.amount);
-  const cs = $("catSum"); cs.innerHTML = "";
-  const keys = Object.keys(tot).sort((x, y) => tot[y] - tot[x]);
-  $("noCat").style.display = keys.length ? "none" : "block";
-  keys.forEach(k => {
-    const r = document.createElement("div");
-    const l = document.createElement("span"); l.textContent = k;
-    const v = document.createElement("span"); v.textContent = fmt(tot[k]);
-    r.append(l, v); cs.appendChild(r);
+  const nk = e => { const t = (e.note || "").trim(); return [t.toLowerCase(), t || "(no note)"]; };
+  const ck = e => [e.category, e.category];
+  const [gf, sf] = grp === "category" ? [ck, nk] : [nk, ck], G = {};
+  exps.forEach(e => {
+    const [k, l] = gf(e), g = G[k] || (G[k] = { label: l, total: 0, sub: {} }); g.total += e.amount;
+    const [k2, l2] = sf(e), s = g.sub[k2] || (g.sub[k2] = { label: l2, total: 0, count: 0 }); s.total += e.amount; s.count++;
+  });
+  const cmp = (a, b) => srt === "high" ? b.total - a.total : srt === "low" ? a.total - b.total : a.label.localeCompare(b.label);
+  const arr = Object.values(G).sort(cmp); arr.forEach((g, i) => g.col = grp === "category" ? color(g.label) : PAL[i % PAL.length]);
+  $("pie").innerHTML = ""; const list = $("catList"); list.innerHTML = ""; $("sumNote").hidden = !arr.length;
+  if (!arr.length) { list.appendChild(el("div", "note", "No expenses in this period.")); return; }
+  $("pie").appendChild(pie(arr, total));
+  arr.forEach(g => {
+    const det = el("details"), sm = el("summary"), dot = el("span", "dot"); dot.style.background = g.col;
+    sm.append(dot, el("span", "cn", g.label), el("span", "cv", fmt(g.total) + " · " + Math.round(g.total / total * 100) + "%")); det.appendChild(sm);
+    Object.values(g.sub).sort(cmp).forEach(s => { const r = el("div", "nl"); r.append(el("span", "", s.label + (s.count > 1 ? " ×" + s.count : "")), el("span", "", fmt(s.total))); det.appendChild(r); });
+    list.appendChild(det);
   });
 }
+function render() {
+  const R = range(); D = calc([lastExp(), R.to].sort().pop());
+  renderTop(); renderHist(); renderSummary();
+  if (!$("settings").hidden) { syncSettings(); drawCal(); }
+}
 
-bindMoney($("daily"), n => { state.daily = n; save(); render(); });
+/* ---------- main events ---------- */
 bindMoney($("amt"));
-$("start").addEventListener("change", e => { if (e.target.value) { state.start = e.target.value; save(); } render(); });
-$("date").addEventListener("change", e => { if (e.target.value) sel = e.target.value; render(); });
-$("prev").onclick = () => { sel = addDays(sel, -1); render(); };
-$("next").onclick = () => { sel = addDays(sel, 1); render(); };
+$("date").addEventListener("change", e => { if (e.target.value) { sel = e.target.value; openDays.add(sel); } render(); });
+$("prev").onclick = () => { sel = addDays(sel, -1); openDays.add(sel); render(); };
+$("next").onclick = () => { sel = addDays(sel, 1); openDays.add(sel); render(); };
 $("add").onclick = () => {
   const amount = parseRp($("amt").value);
   if (!(amount > 0)) { $("amt").focus(); return; }
-  const category = $("cat").value || "Other";
-  state.expenses.push({ id: Date.now() + Math.random(), date: sel, category, amount, note: $("memo").value.trim() });
+  state.expenses.push({ id: Date.now() + Math.random(), date: sel, category: $("cat").value || "Other", amount, note: $("memo").value.trim() });
   if (sel < state.start) state.start = sel;
-  $("amt").value = ""; $("memo").value = ""; $("amt").focus();
-  save(); render();
+  openDays.add(sel); $("amt").value = ""; $("memo").value = ""; $("amt").focus(); save(); render();
 };
 $("memo").addEventListener("keydown", e => { if (e.key === "Enter") $("add").click(); });
-$("newCatBtn").onclick = () => { const r = $("newCatRow"); r.hidden = !r.hidden; if (!r.hidden) $("newCat").focus(); };
-function saveCat() {
-  const name = $("newCat").value.trim().slice(0, 30);
-  if (!name) { $("newCat").focus(); return; }
-  const found = allCats().find(c => c.toLowerCase() === name.toLowerCase());
-  if (!found) state.categories.push(name);
-  $("newCat").value = ""; $("newCatRow").hidden = true;
-  save(); render(); $("cat").value = found || name;
+$("more").onclick = () => { histLimit += 60; renderHist(); };
+document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => { mode = b.dataset.m; render(); });
+document.querySelectorAll("[data-g]").forEach(b => b.onclick = () => { grp = b.dataset.g; renderSummary(); });
+document.querySelectorAll("[data-s]").forEach(b => b.onclick = () => { srt = b.dataset.s; renderSummary(); });
+const shift = k => { if (mode === "week") anchor = addDays(anchor, 7 * k); else anchor = monthStart(anchor, k); render(); };
+$("sPrev").onclick = () => shift(-1); $("sNext").onclick = () => shift(1);
+$("cf").addEventListener("change", e => { if (e.target.value) cFrom = e.target.value; render(); });
+$("ct").addEventListener("change", e => { if (e.target.value) cTo = e.target.value; render(); });
+
+/* ---------- settings ---------- */
+Object.keys(LOC).forEach(c => { const o = el("option", "", c); o.value = c; $("cur").appendChild(o); });
+function syncSettings() {
+  $("cur").value = state.currency; $("start").value = state.start;
+  if (document.activeElement !== $("daily")) $("daily").value = state.daily ? rp(state.daily) : "";
+  if (document.activeElement !== $("weekend")) $("weekend").value = state.weekend != null ? rp(state.weekend) : "";
+  $("cAmt").placeholder = rp(0);
 }
-$("saveCat").onclick = saveCat;
-$("newCat").addEventListener("keydown", e => { if (e.key === "Enter") saveCat(); });
-$("expExp").onclick = () => exportCsv("expenses", [["Date", "Category", "Amount", "Note"], ...[...state.expenses].sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id).map(e => [e.date, e.category, e.amount, e.note || ""])]);
-$("expDay").onclick = () => exportCsv("daily-budget", dayRows());
+$("openSet").onclick = () => { $("settings").hidden = false; calMonth = monthStart(sel); csel = new Set(); syncSettings(); drawCal(); };
+$("sDone").onclick = () => { $("settings").hidden = true; };
+$("cur").onchange = e => { state.currency = e.target.value; setNf(); save(); ["daily", "weekend", "cAmt"].forEach(i => $(i).value = ""); render(); };
+bindMoney($("daily"), n => { state.daily = n || 0; save(); render(); });
+bindMoney($("weekend"), n => { state.weekend = n; save(); render(); });
+bindMoney($("cAmt"));
+$("start").addEventListener("change", e => { if (e.target.value) { state.start = e.target.value; save(); } render(); });
+
+let calMonth = monthStart(today), csel = new Set(), cells = {}, lastClick = null, dragStart = null, dragCur = null, base = new Set(), wasSel = false, moved = false;
+const span = (a, b) => { if (a > b) [a, b] = [b, a]; const out = []; for (let d = a, i = 0; d <= b && i < 800; d = addDays(d, 1), i++) out.push(d); return out; };
+function paint() {
+  for (const d in cells) cells[d].classList.toggle("sel", csel.has(d));
+  $("selInfo").textContent = csel.size + (csel.size === 1 ? " day selected" : " days selected");
+}
+function drawCal() {
+  const g = $("cal"); g.innerHTML = ""; cells = {}; const m = parse(calMonth);
+  $("calLabel").textContent = m.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+  for (let i = 0; i < m.getDay(); i++) g.appendChild(el("div", "cd e"));
+  const n = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate();
+  for (let i = 1; i <= n; i++) {
+    const d = iso(new Date(m.getFullYear(), m.getMonth(), i)), c = el("div", "cd" + (state.overrides[d] != null ? " ov" : ""));
+    c.dataset.d = d; c.append(el("span", "", i), el("span", "v", compact(amountFor(d)))); cells[d] = c; g.appendChild(c);
+  }
+  paint();
+}
+$("cal").addEventListener("pointerdown", e => {
+  const c = e.target.closest(".cd"); if (!c || c.classList.contains("e")) return; e.preventDefault();
+  const d = c.dataset.d, add = e.ctrlKey || e.metaKey || e.pointerType === "touch";
+  if (e.shiftKey && lastClick) { csel = new Set([...(add ? csel : []), ...span(lastClick, d)]); dragStart = null; }
+  else { base = add ? new Set(csel) : new Set(); wasSel = csel.has(d); moved = false; dragStart = dragCur = d; lastClick = d; csel = new Set([...base, d]); }
+  paint();
+});
+window.addEventListener("pointermove", e => {
+  if (!dragStart) return;
+  const t = document.elementFromPoint(e.clientX, e.clientY), c = t && t.closest && t.closest(".cd");
+  if (!c || !c.dataset.d || c.dataset.d === dragCur) return;
+  dragCur = c.dataset.d; if (dragCur !== dragStart) moved = true;
+  csel = new Set([...base, ...span(dragStart, dragCur)]); paint();
+});
+window.addEventListener("pointerup", () => {
+  if (dragStart && !moved && wasSel && base.has(dragStart)) csel.delete(dragStart);
+  dragStart = null; paint();
+});
+$("cPrev").onclick = () => { calMonth = monthStart(calMonth, -1); drawCal(); };
+$("cNext").onclick = () => { calMonth = monthStart(calMonth, 1); drawCal(); };
+const pick = f => { csel = new Set(Object.keys(cells).filter(f)); lastClick = null; paint(); };
+$("qWe").onclick = () => pick(d => [0, 6].includes(parse(d).getDay()));
+$("qWd").onclick = () => pick(d => ![0, 6].includes(parse(d).getDay()));
+$("qAll").onclick = () => pick(() => true);
+$("qClr").onclick = () => { csel = new Set(); paint(); };
+$("cApply").onclick = () => {
+  if (!csel.size) { $("selInfo").textContent = "Select some days first."; return; }
+  if (!/\d/.test($("cAmt").value)) { $("cAmt").focus(); return; }
+  const n = parseRp($("cAmt").value); csel.forEach(d => state.overrides[d] = n); save(); render();
+};
+$("cReset").onclick = () => { csel.forEach(d => delete state.overrides[d]); save(); render(); };
+
+/* ---------- CSV + reset ---------- */
+const csvCell = v => { let s = String(v == null ? "" : v); if (typeof v !== "number" && /^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+const toCsv = rows => "\ufeff" + rows.map(r => r.map(csvCell).join(",")).join("\r\n");
+function exportCsv(name, rows) {
+  const note = $("exportNote");
+  try {
+    const url = URL.createObjectURL(new Blob([toCsv(rows)], { type: "text/csv;charset=utf-8" }));
+    const a = el("a"); a.href = url; a.download = name + "-" + today + ".csv"; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000); note.textContent = "Exported " + name + ".";
+  } catch (e) { note.textContent = "Couldn’t export: " + ((e && e.message) || "unknown error"); }
+}
+$("expExp").onclick = () => exportCsv("expenses", [["Date", "Category", "Amount (" + state.currency + ")", "Note"], ...[...state.expenses].sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id).map(e => [e.date, e.category, e.amount, e.note || ""])]);
+$("expDay").onclick = () => {
+  const X = calc(lastExp()), c = " (" + state.currency + ")", out = [["Date", "Budget for the day" + c, "Rollover from previous days" + c, "Available budget" + c, "Spent" + c, "Left, rolls over to next day" + c]];
+  Object.keys(X).forEach(d => { const y = X[d]; out.push([d, y.amt, y.roll, y.avail, y.spent, y.left]); });
+  exportCsv("daily-budget", out);
+};
 $("reset").onclick = () => {
-  if (confirm("Clear all expenses and settings?")) { state = { daily: 200000, start: today, expenses: [], categories: [] }; sel = today; save(); render(); }
+  if (confirm("Clear all expenses and settings?")) { state = { daily: 200000, weekend: null, start: today, expenses: [], categories: [], overrides: {}, currency: "IDR" }; setNf(); sel = today; openDays = new Set([today]); save(); render(); }
 };
 render();
 </script>
