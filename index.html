@@ -374,6 +374,37 @@ input.tg:focus { box-shadow: 0 0 0 3px var(--accent-alpha); }
 .ar .inf { flex: 1; min-width: 0; }
 .ar .inf b { overflow-wrap: anywhere; font-size: 1.05rem; display: block; margin-bottom: 4px; }
 .ar .bal { font-weight: 700; white-space: nowrap; font-size: 1.1rem; padding: 0 12px;}
+
+/* Chart Styles */
+.chart-container { 
+  width: 100%; height: 180px; 
+  margin-bottom: 24px; position: relative; 
+  display: flex; align-items: flex-end; gap: 4px; 
+  padding-bottom: 24px; border-bottom: 1px solid var(--line); 
+}
+.chart-bar { 
+  flex: 1; background: var(--accent); 
+  border-radius: 4px 4px 0 0; min-height: 0; 
+  position: relative; transition: height 0.4s ease, background 0.2s; 
+  cursor: pointer; 
+}
+.chart-bar:hover { background: var(--accent-hover); }
+.chart-lbl { 
+  position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); 
+  font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; 
+}
+.chart-tooltip { 
+  position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); 
+  background: var(--text); color: var(--bg); padding: 6px 10px; 
+  border-radius: 8px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; 
+  opacity: 0; pointer-events: none; transition: opacity 0.2s, bottom 0.2s; z-index: 10; 
+  box-shadow: var(--shadow);
+}
+.chart-tooltip::after {
+  content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  border-width: 5px; border-style: solid; border-color: var(--text) transparent transparent transparent;
+}
+.chart-bar:hover .chart-tooltip { opacity: 1; bottom: calc(100% + 12px); }
 </style>
 </head>
 <body>
@@ -483,7 +514,10 @@ input.tg:focus { box-shadow: 0 0 0 3px var(--accent-alpha); }
         <div class="big" id="accTotal">—</div>
         <div class="note" style="margin:0" id="accNote"></div>
       </div>
-      <button id="addAcc" style="padding: 14px 24px; font-size: 1.05rem;">+ Add New Account</button>
+      <div style="display:flex; gap: 10px; flex-wrap: wrap;">
+        <button id="btnTransfer" class="ghost" style="padding: 14px 20px;">⇄ Transfer</button>
+        <button id="addAcc" style="padding: 14px 20px; font-size: 1.05rem;">+ Add Account</button>
+      </div>
     </div>
   </div>
   <div id="accList" style="display: grid; gap: 20px;"></div>
@@ -507,6 +541,14 @@ input.tg:focus { box-shadow: 0 0 0 3px var(--accent-alpha); }
   <label for="cur">Currency Display</label>
   <select id="cur"></select>
   <div class="note">Only changes the symbol and formatting; amounts are not converted.</div>
+  
+  <label for="resetPeriod" style="margin-top: 16px;">Rollover Reset Period</label>
+  <select id="resetPeriod">
+    <option value="never">Never (Continuous Rollover)</option>
+    <option value="weekly">Weekly (Resets every Monday)</option>
+    <option value="monthly">Monthly (Resets on the 1st of the month)</option>
+  </select>
+  <div class="note" style="margin-bottom: 24px;">Choose if your unspent budget should reset to 0 at a certain time instead of perpetually rolling over.</div>
   
   <h3>Daily Budget Limits</h3>
   <div class="row first">
@@ -613,7 +655,7 @@ const KD = {
   spend: { list: "catList", colors: "catColors", items: "expenses", defs: ["Food", "Transport", "Shopping", "Bills", "Entertainment", "Health", "Other"], title: "Spending Categories" },
   income: { list: "inCatList", colors: "inCatColors", items: "incomes", defs: ["Salary", "Bonus", "Gift", "Investment", "Other"], title: "Income Categories" }
 };
-const blank = () => ({ daily: 200000, weekend: null, start: today, expenses: [], incomes: [], accounts: [], lastAcc: {}, catList: null, catColors: {}, inCatList: null, inCatColors: {}, overrides: {}, currency: "IDR", theme: "light" });
+const blank = () => ({ daily: 200000, weekend: null, start: today, expenses: [], incomes: [], transfers: [], accounts: [], lastAcc: {}, catList: null, catColors: {}, inCatList: null, inCatColors: {}, overrides: {}, currency: "IDR", theme: "light", resetPeriod: "never" });
 let state = blank();
 
 try {
@@ -631,6 +673,8 @@ function init() {
   if (!state.overrides || typeof state.overrides !== "object") state.overrides = {};
   if (!LOC[state.currency]) state.currency = "IDR";
   if (!Array.isArray(state.incomes)) state.incomes = [];
+  if (!Array.isArray(state.transfers)) state.transfers = [];
+  if (!state.resetPeriod) state.resetPeriod = "never";
   if (!Array.isArray(state.accounts)) state.accounts = [];
   if (!state.lastAcc) state.lastAcc = {};
   if (Array.isArray(state.rules)) { 
@@ -672,16 +716,17 @@ function bindMoney(inp, onChange) {
 }
 
 /* ---------- Custom Confirm Modal ---------- */
-function customConfirm(title, msg, onConfirm, okText = "Confirm", isDanger = true) {
+function customConfirm(title, msg, onConfirm, okText = "Confirm", isDanger = true, showCancel = true) {
   $("confirmTitle").textContent = title;
   $("confirmMsg").textContent = msg;
   $("confirmOk").textContent = okText;
   $("confirmOk").style.background = isDanger ? "var(--bad)" : "var(--accent)";
+  $("confirmCancel").style.display = showCancel ? "block" : "none";
   $("confirmModal").hidden = false;
   
   $("confirmOk").onclick = () => {
     $("confirmModal").hidden = true;
-    onConfirm();
+    if (onConfirm) onConfirm();
   };
   $("confirmCancel").onclick = () => {
     $("confirmModal").hidden = true;
@@ -709,7 +754,16 @@ function calc(end) {
   const by = {}; state.expenses.forEach(e => by[e.date] = (by[e.date] || 0) + e.amount);
   const out = {}; let carry = 0, n = Math.min(diff(state.start, end), 1500);
   for (let i = 0; i <= n; i++) {
-    const d = addDays(state.start, i), amt = amountFor(d), avail = carry + amt, spent = by[d] || 0;
+    const d = addDays(state.start, i);
+    
+    // Process Reset Period Rollover Erasure
+    if (i > 0) {
+      const dt = parse(d);
+      if (state.resetPeriod === "weekly" && dt.getDay() === 1) carry = 0;
+      else if (state.resetPeriod === "monthly" && dt.getDate() === 1) carry = 0;
+    }
+    
+    const amt = amountFor(d), avail = carry + amt, spent = by[d] || 0;
     out[d] = { amt, roll: carry, avail, spent, left: avail - spent }; carry = avail - spent;
   }
   return out;
@@ -921,25 +975,86 @@ $("inMore").onclick = () => { inLimit += 30; renderIncome(); };
 
 /* ---------- Accounts Page ---------- */
 const sumBy = (arr, id) => arr.filter(e => e.account === id).reduce((s, e) => s + e.amount, 0);
+
 function accModal(acc) {
   openModal(acc ? "Edit Account" : "Add New Account",
     `<label>Account Name (e.g. BCA, Mandiri)</label><input id="aName" type="text" maxlength="40" placeholder="e.g. BCA Savings" autocomplete="off">
     <label>Account Type</label><select id="aType">${ACC_TYPES.map(t => "<option>" + t + "</option>").join("")}</select>
     <label>Current / Opening Balance</label><input id="aOpen" type="text" inputmode="numeric" autocomplete="off">
-    <div class="note">For Credit Cards, enter the amount you currently owe.</div>`,
+    <div class="note">For Credit Cards, enter the amount you currently owe (will be saved as negative).</div>
+    <div id="ccSettings" style="display:none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line);">
+      <div class="row first">
+        <div><label>Statement Day (1-31)</label><input id="aStmt" type="number" min="1" max="31" placeholder="e.g. 15"></div>
+        <div><label>Due Day (1-31)</label><input id="aDue" type="number" min="1" max="31" placeholder="e.g. 25"></div>
+      </div>
+    </div>`,
     () => {
       const name = $("aName").value.trim(); if (!name) return mErr("Please enter an account name.");
-      const type = $("aType").value; let open = parseRp($("aOpen").value); if (type === "Credit Card") open = -open;
-      if (acc) Object.assign(acc, { name, type, opening: open }); else state.accounts.push({ id: uid(), name, type, opening: open });
+      const type = $("aType").value; 
+      let open = parseRp($("aOpen").value); 
+      if (type === "Credit Card") open = -Math.abs(open);
+      
+      const stmtDay = parseInt($("aStmt").value) || null;
+      const dueDay = parseInt($("aDue").value) || null;
+
+      if (acc) Object.assign(acc, { name, type, opening: open, statementDay: stmtDay, dueDay: dueDay }); 
+      else state.accounts.push({ id: uid(), name, type, opening: open, statementDay: stmtDay, dueDay: dueDay });
       save(); render();
     });
+    
   bindMoney($("aOpen")); $("aOpen").placeholder = rp(0);
-  if (acc) { $("aName").value = acc.name; $("aType").value = acc.type; $("aOpen").value = acc.opening ? rp(Math.abs(acc.opening)) : ""; }
+  
+  const toggleCC = () => { $("ccSettings").style.display = $("aType").value === "Credit Card" ? "block" : "none"; };
+  $("aType").addEventListener("change", toggleCC);
+  
+  if (acc) { 
+    $("aName").value = acc.name; 
+    $("aType").value = acc.type; 
+    $("aOpen").value = acc.opening ? rp(Math.abs(acc.opening)) : ""; 
+    if (acc.statementDay) $("aStmt").value = acc.statementDay;
+    if (acc.dueDay) $("aDue").value = acc.dueDay;
+  }
+  toggleCC();
+}
+
+function payCardModal(cc, currentBal) {
+  const availAccs = state.accounts.filter(a => a.id !== cc.id && a.type !== "Credit Card");
+  if (!availAccs.length) {
+    return customConfirm("No Accounts Available", "You need at least one other non-credit account (like a Bank Account or Cash) to pay your credit card from.", null, "Got it", false, false);
+  }
+  
+  let accOpts = availAccs.map(a => `<option value="${a.id}">${a.name}</option>`).join("");
+  const defAmt = currentBal < 0 ? Math.abs(currentBal) : 0;
+  
+  openModal("Pay Credit Card",
+    `<div class="note" style="margin-bottom:16px;">Paying to <b>${cc.name}</b>. This will internally transfer money from another account and won't affect your daily spending budget.</div>
+     <label>Payment Date</label><input id="pDate" type="date" value="${today}">
+     <label>Amount to Pay</label><input id="pAmt" type="text" inputmode="numeric" autocomplete="off" value="${defAmt ? rp(defAmt) : ''}">
+     <label>Pay From</label><select id="pFrom">${accOpts}</select>`,
+    () => {
+      const amt = parseRp($("pAmt").value);
+      if (!(amt > 0)) return mErr("Please enter a valid amount.");
+      const fromId = $("pFrom").value;
+      const pDate = $("pDate").value || today;
+      
+      state.transfers.push({ id: uid(), date: pDate, fromAcc: fromId, toAcc: cc.id, amount: amt });
+      save(); render();
+    });
+    
+  bindMoney($("pAmt"));
+  $("pAmt").placeholder = rp(0);
 }
 
 function renderAcc() {
   const root = $("accList"); root.innerHTML = ""; let total = 0;
-  const data = state.accounts.map(a => { const inc = sumBy(state.incomes, a.id), sp = sumBy(state.expenses, a.id), bal = a.opening + inc - sp; total += bal; return { a, inc, sp, bal }; });
+  const data = state.accounts.map(a => { 
+    const inc = sumBy(state.incomes, a.id), sp = sumBy(state.expenses, a.id);
+    const trOut = state.transfers.filter(t => t.from === a.id).reduce((s, t) => s + t.amount, 0);
+    const trIn = state.transfers.filter(t => t.to === a.id).reduce((s, t) => s + t.amount, 0);
+    const bal = a.opening + inc - sp - trOut + trIn; 
+    total += bal; 
+    return { a, inc, sp, trOut, trIn, bal }; 
+  });
   
   $("accTotal").textContent = fmt(total); 
   $("accTotal").className = "big " + (total < 0 ? "neg" : "pos");
@@ -960,27 +1075,38 @@ function renderAcc() {
     
     rows.forEach(r => {
       const row = el("div", "ar"), inf = el("div", "inf");
-      inf.append(el("b", "", r.a.name), el("div", "note", `Starting: ${fmt(r.a.opening)} | In: +${fmt(r.inc)} | Out: -${fmt(r.sp)}`));
+      inf.append(el("b", "", r.a.name), el("div", "note", `Starting: ${fmt(r.a.opening)} | In: +${fmt(r.inc + r.trIn)} | Out: -${fmt(r.sp + r.trOut)}`));
       
       const ed = el("button", "ghost sm", "Edit"); ed.setAttribute("aria-label", "Edit account");
       const del = el("button", "x", "×"); del.setAttribute("aria-label", "Delete account");
-      
-      ed.onclick = () => accModal(r.a);
-      del.onclick = () => {
-        const n = state.expenses.filter(e => e.account === r.a.id).length + state.incomes.filter(e => e.account === r.a.id).length;
-        customConfirm("Delete Account", `Are you sure you want to delete “${r.a.name}”?` + (n ? ` Its ${n} transactions will be kept but have no account linked.` : ""), () => {
-          state.expenses.forEach(e => { if (e.account === r.a.id) e.account = null; }); 
-          state.incomes.forEach(e => { if (e.account === r.a.id) e.account = null; });
-          state.accounts = state.accounts.filter(x => x.id !== r.a.id); 
-          save(); render();
-        });
-      };
       row.append(inf, el("div", "bal" + (r.bal < 0 ? " neg" : " pos"), fmt(r.bal)), ed, del); card.appendChild(row);
     });
     root.appendChild(card);
   });
 }
 $("addAcc").onclick = () => accModal(null);
+
+$("btnTransfer").onclick = () => {
+  if (state.accounts.length < 2) {
+    return customConfirm("Need More Accounts", "You need at least two accounts to make a transfer.", () => {}, "Got it", false);
+  }
+  openModal("Transfer Money / Pay Card",
+    `<label>Transfer From</label><select id="trFrom">${state.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join("")}</select>
+     <label>Transfer To</label><select id="trTo">${state.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join("")}</select>
+     <label>Amount</label><input id="trAmt" type="text" inputmode="numeric" autocomplete="off">
+     <label>Date</label><input id="trDate" type="date" value="${today}">
+     <label>Note (Optional)</label><input id="trNote" type="text" maxlength="100" placeholder="e.g. Credit Card Payment">`,
+    () => {
+      const from = $("trFrom").value, to = $("trTo").value, amt = parseRp($("trAmt").value), dt = $("trDate").value;
+      if (from === to) return mErr("Source and destination accounts must be different.");
+      if (!(amt > 0)) return mErr("Please enter a valid amount.");
+      if (!dt) return mErr("Please select a date.");
+      state.transfers.push({ id: uid(), date: dt, from, to, amount: amt, note: $("trNote").value.trim() });
+      save(); render();
+    }
+  );
+  bindMoney($("trAmt")); $("trAmt").placeholder = rp(0);
+};
 
 /* ---------- Summary (Spending + Income) ---------- */
 const SUMHTML = `<h3 style="margin-top:0">Analytics & Summary</h3>
@@ -991,6 +1117,7 @@ const SUMHTML = `<h3 style="margin-top:0">Analytics & Summary</h3>
   <button class="ghost sNext" aria-label="Next period" style="padding: 8px 12px;">›</button>
 </div>
 <div class="row first cRange" style="margin-bottom:20px"><div><label>From</label><input class="cf" type="date"></div><div><label>To</label><input class="ct" type="date"></div></div>
+<div class="chart-container"></div>
 <div class="tiles"></div>
 <div class="row first" style="align-items:center;margin-bottom:20px">
   <div><div class="lbl" style="margin:0 0 8px">Group Breakdown By</div><div class="seg" style="margin:0"><button data-g="category">Category</button><button data-g="note">Note</button></div></div>
@@ -1057,6 +1184,57 @@ function renderSum(k) {
   const tiles = q(".tiles"); tiles.innerHTML = "";
   const days = Math.min(diff(R.from, R.to) + 1, 1500);
   
+  // Render Chart
+  const chart = q(".chart-container");
+  chart.innerHTML = "";
+  if (items.length > 0) {
+    const isDaily = days <= 35;
+    const bins = [];
+    let maxVal = 0;
+    
+    if (isDaily) {
+      for(let i=0; i<days; i++) {
+        let d = addDays(R.from, i);
+        let v = items.filter(x => x.date === d).reduce((s, x) => s + x.amount, 0);
+        bins.push({ label: parse(d).getDate(), full: d, val: v });
+        if(v > maxVal) maxVal = v;
+      }
+    } else {
+      let cur = parse(R.from), endD = parse(R.to);
+      while(cur <= endD) {
+        let mStr = cur.getFullYear() + "-" + pad(cur.getMonth()+1);
+        let v = items.filter(x => x.date.startsWith(mStr)).reduce((s, x) => s + x.amount, 0);
+        bins.push({ label: cur.toLocaleDateString(undefined, {month:'short'}), full: mStr, val: v });
+        if(v > maxVal) maxVal = v;
+        cur.setMonth(cur.getMonth()+1);
+      }
+    }
+    
+    if (maxVal > 0) {
+      bins.forEach((b, idx) => {
+        const bar = el("div", "chart-bar");
+        const h = Math.max((b.val / maxVal) * 100, b.val > 0 ? 3 : 0);
+        bar.style.height = h + "%";
+        if (b.val === 0) bar.style.background = "transparent";
+        else bar.style.background = (k === "spend" ? "var(--bad)" : "var(--accent)");
+        
+        const tipText = isDaily ? shortDate(b.full) : b.full;
+        const tip = el("div", "chart-tooltip", tipText + ": " + fmt(b.val));
+        const lbl = el("div", "chart-lbl", b.label);
+        
+        if (days <= 14 || bins.length <= 14 || idx % Math.ceil(bins.length / 8) === 0 || idx === bins.length - 1) {
+           bar.appendChild(lbl);
+        }
+        if (b.val > 0) bar.appendChild(tip);
+        chart.appendChild(bar);
+      });
+    } else {
+      chart.innerHTML = `<div class="note" style="width:100%; text-align:center;">All amounts are 0.</div>`;
+    }
+  } else {
+    chart.innerHTML = `<div class="note" style="width:100%; text-align:center;">No activity in this period to chart.</div>`;
+  }
+
   if (k === "spend") {
     const X = calc([lastExp(), R.to].sort().pop()); let bud = 0;
     for (let i = 0; i < days; i++) { const x = X[addDays(R.from, i)]; if (x) bud += x.amt; }
@@ -1141,13 +1319,14 @@ function render() {
 /* ---------- Settings ---------- */
 Object.keys(LOC).forEach(c => { const o = el("option", "", c + " (" + LOC[c] + ")"); o.value = c; $("cur").appendChild(o); });
 function syncSettings() {
-  $("cur").value = state.currency; $("start").value = state.start;
+  $("cur").value = state.currency; $("start").value = state.start; $("resetPeriod").value = state.resetPeriod;
   if (document.activeElement !== $("daily")) $("daily").value = state.daily ? rp(state.daily) : "";
   if (document.activeElement !== $("weekend")) $("weekend").value = state.weekend != null ? rp(state.weekend) : "";
   $("cAmt").placeholder = rp(0);
 }
 $("sDone").onclick = () => { $("settings").hidden = true; };
 $("cur").onchange = e => { state.currency = e.target.value; setNf(); save(); ["daily", "weekend", "cAmt"].forEach(i => $(i).value = ""); render(); };
+$("resetPeriod").onchange = e => { state.resetPeriod = e.target.value; save(); render(); };
 bindMoney($("daily"), n => { state.daily = n || 0; save(); render(); });
 bindMoney($("weekend"), n => { state.weekend = n; save(); render(); });
 bindMoney($("cAmt"));
